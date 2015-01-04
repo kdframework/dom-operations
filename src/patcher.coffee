@@ -147,21 +147,21 @@ insertNode = (parentNode, kdNode, renderOptions) ->
 ###
 textNodePatch = (domNode, current, next, renderOptions) ->
 
-    newNode = null
+  newNode = null
 
-    if domNode.nodeType is 3
+  if domNode.nodeType is 3
 
-      domNode.replaceData 0, domNode.length, next.value
-      newNode = domNode
+    domNode.replaceData 0, domNode.length, next.value
+    newNode = domNode
 
-    else
+  else
 
-      parentNode = domNode.parentNode
-      newNode = createElement next, renderOptions
+    parentNode = domNode.parentNode
+    newNode = createElement next, renderOptions
 
-      parentNode.replaceChild newNode, domNode  if parentNode
+    parentNode.replaceChild newNode, domNode  if parentNode
 
-    return newNode
+  return newNode
 
 
 ###*
