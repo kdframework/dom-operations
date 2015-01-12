@@ -1,10 +1,13 @@
 jest.autoMockOff()
 
-KDViewNode = require 'kdf-dom/lib/viewnode'
+KDViewNode     = require 'kdf-dom/lib/viewnode'
+KDEventEmitter = require 'kdf-event-emitter'
 
 KDDomDiff     = require '../src/diff'
 KDDomPatcher  = require '../src/patcher'
 createElement = require '../src/create-element'
+
+fakeEvent = require 'synthetic-dom-events'
 
 describe 'KDDomPatcher', ->
 
@@ -37,6 +40,33 @@ describe 'KDDomPatcher', ->
 
       expect(newNode.childNodes[0].tagName).toBe 'SPAN'
       expect(newNode.childNodes[0].childNodes[0].textContent).toBe 'bar'
+
+
+    it 'transforms attached events to new view node', ->
+
+      current = new EventedView { id: 1, foo: 'a'}
+      next    = new EventedView { id: 2, foo: 'b'}
+
+      counts = {current: 0, next: 0}
+      current.on 'click', -> counts.current++
+      next.on    'click', -> counts.next++
+
+      domElement = createElement current
+      document.body.appendChild domElement
+
+      clickEvent = fakeEvent 'click', { bubbles: yes }
+      domElement.dispatchEvent clickEvent
+
+      expect(counts.current).toBe 1
+
+      patch = KDDomDiff.generatePatch current, next
+
+      domElement = KDDomPatcher.patch domElement, patch
+
+      domElement.dispatchEvent clickEvent
+
+      expect(counts.next).toBe 1
+      expect(counts.current).toBe 1
 
 
     it 'unregisters kd node from dom event delegator', ->
@@ -73,5 +103,18 @@ describe 'KDDomPatcher', ->
       applySinglePatch = -> KDDomPatcher.applySinglePatch { type: 'UNKNOWN_TYPE' }
 
       expect(applySinglePatch).toThrow()
+
+
+class EventedView extends KDViewNode
+
+  @include KDEventEmitter
+
+  constructor: (options = {}, data) ->
+
+    super options, data
+
+    KDEventEmitter.call this
+
+    @on 'click', => @clicked = yes
 
 

@@ -151,7 +151,10 @@ insertNode = (parentNode, kdNode, renderOptions) ->
 
   newNode = createElement kdNode, renderOptions
 
-  parentNode.appendChild newNode  if parentNode
+  if parentNode
+
+    parentNode.appendChild newNode  if parentNode
+    eventDelegator.registerNode newNode, kdNode
 
   return parentNode
 
