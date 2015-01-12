@@ -3,6 +3,8 @@ KDDomPatch = require './patch'
 { isFunction, isObject, isEmpty } = require 'lodash'
 { isViewNode, isTextNode, getAttributes } = require 'kdf-dom/lib/helpers'
 
+KDDomEventDelegator = require 'kdf-dom-event-delegator'
+
 module.exports = class KDDomDiff
 
   ###*
@@ -76,6 +78,16 @@ module.exports = class KDDomDiff
         # if we are not dealing with same node
         # we are simply deleting and recreating new view node
         else patchArray = addViewNodePatch left, right, patch, index
+
+        # TODO: find a better place to do this.
+        # if there are no difference between 2 nodes
+        # dom-event-delegator doesn't get updated with the
+        # new kd node. No matter what we are doing,
+        # we need to update the domEventDelegator to delegate
+        # events to next view.
+        if left.domElement
+          right.domElement = left.domElement
+          KDDomEventDelegator.getInstance().registerNode right.domElement, right
 
       # if current node is not a view node
       # we are destroying it and adding a view node.
