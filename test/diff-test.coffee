@@ -314,7 +314,7 @@ describe 'KDDomDiff', ->
             patch = traverse current, next
 
             expect(patch[0].type).toEqual KDDomPatch.ATTRIBUTES
-            expect(patch[0].node).toEqual current
+            expect(patch[0].node).toEqual { current, next }
             expect(patch[0].patch).toEqual { href: 'kd.io' }
 
 

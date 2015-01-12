@@ -201,11 +201,11 @@ attributesPatch = (domPatch, domNode, renderOptions) ->
 
   { node, type, patch } = domPatch
 
-  vNode = properties: node.attributes
+  vNode = properties: { attributes: node.current.options.attributes }
 
   vPatch = { type, patch, vNode }
 
-  patchOp vPatch, domNode, renderOptions
+  result = patchOp vPatch, domNode, renderOptions
 
 
 ###*

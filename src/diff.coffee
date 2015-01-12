@@ -61,8 +61,10 @@ module.exports = class KDDomDiff
           rightAttributes = getAttributes right
 
           attrDiff = KDDomDiff.diffAttributes leftAttributes, rightAttributes
-
-          attrPatch  = new KDDomPatch { type: KDDomPatch.ATTRIBUTES, patch: attrDiff, node: left }
+          attrPatch = new KDDomPatch
+            type  : KDDomPatch.ATTRIBUTES
+            patch : attrDiff
+            node  : { current: left, next: right }
 
           patchArray = appendPatch patchArray, attrPatch  if attrDiff
 
@@ -72,7 +74,7 @@ module.exports = class KDDomDiff
           patchArray = KDDomDiff.diffSubviews left, right, patch, patchArray, index
 
         # if we are not dealing with same node
-        # we are simly deleting and recreating new view node
+        # we are simply deleting and recreating new view node
         else patchArray = addViewNodePatch left, right, patch, index
 
       # if current node is not a view node
