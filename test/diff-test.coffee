@@ -314,7 +314,7 @@ describe 'KDDomDiff', ->
             patch = traverse current, next
 
             expect(patch[0].type).toEqual KDDomPatch.ATTRIBUTES
-            expect(patch[0].node).toEqual current
+            expect(patch[0].node).toEqual { current, next }
             expect(patch[0].patch).toEqual { href: 'kd.io' }
 
 
@@ -351,9 +351,9 @@ describe 'KDDomDiff', ->
 
             patch = traverse current, next
 
-            expect(patch[0][0].type).toBe KDDomPatch.DESTROY
-            expect(patch[0][0].node).toBe current
-            expect(patch[0][0].patch).toBeNull()
+            expect(patch[0][1].type).toBe KDDomPatch.DESTROY
+            expect(patch[0][1].node).toBe current
+            expect(patch[0][1].patch).toBeNull()
 
 
           it 'adds an insert patch for next view node', ->
@@ -363,7 +363,7 @@ describe 'KDDomDiff', ->
 
             patch = traverse current, next
 
-            expect(patch[0][1]).toEqual {
+            expect(patch[0][0]).toEqual {
               type  : KDDomPatch.VIEW_NODE
               node  : current
               patch : next

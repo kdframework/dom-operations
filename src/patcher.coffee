@@ -4,8 +4,10 @@
 domIndex = require 'vdom/dom-index'
 patchOp  = require 'vdom/patch-op'
 
-createElement = require './create-element'
+eventDelegator = require('kdf-dom-event-delegator').getInstance()
+
 KDDomPatch    = require './patch'
+createElement = require './create-element'
 
 module.exports = class KDDomPatcher
 
@@ -109,13 +111,31 @@ module.exports = class KDDomPatcher
     { type, node, patch } = domPatch
 
     return switch type
-      when KDDomPatch.DESTROY    then patchOp domPatch, domNode, renderOptions
+      when KDDomPatch.DESTROY    then destroyNode domPatch, domNode, renderOptions
       when KDDomPatch.ORDER      then patchOp domPatch, domNode, renderOptions
       when KDDomPatch.INSERT     then insertNode domNode, patch, renderOptions
       when KDDomPatch.TEXT_NODE  then textNodePatch domNode, node, patch, renderOptions
       when KDDomPatch.VIEW_NODE  then viewNodePatch domNode, node, patch, renderOptions
       when KDDomPatch.ATTRIBUTES then attributesPatch domPatch, domNode, renderOptions
       else throw new Error 'Patch type is unknown'
+
+
+###*
+ * Destroys given dom node, before that it unregisters
+ * itself from dom event delegator.
+ *
+ * @param {KDDomPatch} domPatch
+ * @param {DOMNode} domNode
+ * @param {Object} renderOptions
+ * @return {DOMNode}
+###
+destroyNode = (domPatch, domNode, renderOptions) ->
+
+  eventDelegator.unregisterNode domNode
+
+  vPatch = { vNode: domPatch.node, type: domPatch.type }
+
+  patchOp vPatch, domNode, renderOptions
 
 
 ###*
@@ -131,7 +151,10 @@ insertNode = (parentNode, kdNode, renderOptions) ->
 
   newNode = createElement kdNode, renderOptions
 
-  parentNode.appendChild newNode  if parentNode
+  if parentNode
+
+    parentNode.appendChild newNode  if parentNode
+    eventDelegator.registerNode newNode, kdNode
 
   return parentNode
 
@@ -147,21 +170,21 @@ insertNode = (parentNode, kdNode, renderOptions) ->
 ###
 textNodePatch = (domNode, current, next, renderOptions) ->
 
-    newNode = null
+  newNode = null
 
-    if domNode.nodeType is 3
+  if domNode.nodeType is 3
 
-      domNode.replaceData 0, domNode.length, next.value
-      newNode = domNode
+    domNode.replaceData 0, domNode.length, next.value
+    newNode = domNode
 
-    else
+  else
 
-      parentNode = domNode.parentNode
-      newNode = createElement next, renderOptions
+    parentNode = domNode.parentNode
+    newNode = createElement next, renderOptions
 
-      parentNode.replaceChild newNode, domNode  if parentNode
+    parentNode.replaceChild newNode, domNode  if parentNode
 
-    return newNode
+  return newNode
 
 
 ###*
@@ -201,11 +224,11 @@ attributesPatch = (domPatch, domNode, renderOptions) ->
 
   { node, type, patch } = domPatch
 
-  vNode = properties: node.attributes
+  vNode = properties: { attributes: node.current.options.attributes }
 
   vPatch = { type, patch, vNode }
 
-  patchOp vPatch, domNode, renderOptions
+  result = patchOp vPatch, domNode, renderOptions
 
 
 ###*

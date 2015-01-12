@@ -1,5 +1,9 @@
 jest.autoMockOff()
 
+KDEventEmitter = require 'kdf-event-emitter'
+{ KDViewNode } = require 'kdf-dom'
+fakeEvent = require 'synthetic-dom-events'
+
 createElement = require '../src/create-element'
 
 { createNode, createTextNode } = require '../src/helpers'
@@ -78,6 +82,23 @@ describe 'createElement', ->
     expect(dom.style.padding).toBe '2px'
 
 
+  it 'attaches events if the node is a KDView', ->
+
+    flag = off
+    view = new KDView
+
+    view.on 'click', -> flag = on
+
+    domElement = createElement view
+    document.body.appendChild domElement
+
+    clickEvent = fakeEvent 'click', {bubbles: yes}
+
+    domElement.dispatchEvent clickEvent
+
+    expect(flag).toBe on
+
+
   it 'adds children', ->
 
     view = createNode 1, [
@@ -111,3 +132,7 @@ describe 'createElement', ->
     expect(children.length).toBe 1
     expect(children[0].textContent).toBe 'test'
 
+
+class KDView extends KDViewNode
+
+  @include KDEventEmitter

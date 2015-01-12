@@ -3,6 +3,8 @@ KDDomPatch = require './patch'
 { isFunction, isObject, isEmpty } = require 'lodash'
 { isViewNode, isTextNode, getAttributes } = require 'kdf-dom/lib/helpers'
 
+KDDomEventDelegator = require 'kdf-dom-event-delegator'
+
 module.exports = class KDDomDiff
 
   ###*
@@ -61,8 +63,10 @@ module.exports = class KDDomDiff
           rightAttributes = getAttributes right
 
           attrDiff = KDDomDiff.diffAttributes leftAttributes, rightAttributes
-
-          attrPatch  = new KDDomPatch { type: KDDomPatch.ATTRIBUTES, patch: attrDiff, node: left }
+          attrPatch = new KDDomPatch
+            type  : KDDomPatch.ATTRIBUTES
+            patch : attrDiff
+            node  : { current: left, next: right }
 
           patchArray = appendPatch patchArray, attrPatch  if attrDiff
 
@@ -72,8 +76,18 @@ module.exports = class KDDomDiff
           patchArray = KDDomDiff.diffSubviews left, right, patch, patchArray, index
 
         # if we are not dealing with same node
-        # we are simly deleting and recreating new view node
+        # we are simply deleting and recreating new view node
         else patchArray = addViewNodePatch left, right, patch, index
+
+        # TODO: find a better place to do this.
+        # if there are no difference between 2 nodes
+        # dom-event-delegator doesn't get updated with the
+        # new kd node. No matter what we are doing,
+        # we need to update the domEventDelegator to delegate
+        # events to next view.
+        if left.domElement
+          right.domElement = left.domElement
+          KDDomEventDelegator.getInstance().registerNode right.domElement, right
 
       # if current node is not a view node
       # we are destroying it and adding a view node.
@@ -96,7 +110,6 @@ module.exports = class KDDomDiff
 
         forceDestroy = no
         patchArray = addTextNodePatch left, right, patch, index, forceDestroy
-
 
     patch[index] = patchArray  if patchArray
 
@@ -179,7 +192,7 @@ module.exports = class KDDomDiff
         # go start traversing the subview.
         KDDomDiff.traverse left, right, patch, index
 
-      index += left.subviews.length  if left?.subviews?.length
+      index += left.count  if left?.count?
 
     if nextSubviews.moves
       orderPatch = new KDDomPatch
@@ -313,6 +326,7 @@ module.exports = class KDDomDiff
       node  : view
       patch : null
 
+    patchArray = patch[index]
     patchArray = appendPatch patchArray, destroyPatch
     patch[index] = patchArray
 
@@ -438,15 +452,16 @@ appendPatch = (patchArray, patch) ->
 
 addViewNodePatch = (left, right, patch, index, forceDestroy = yes) ->
 
-  KDDomDiff.destroyView left, patch, index  if forceDestroy
-
   viewPatch = new KDDomPatch
     type  : KDDomPatch.VIEW_NODE
     node  : left
     patch : right
 
-  patchArray = patch[index]
-  patchArray = appendPatch patchArray, viewPatch
+  patch[index] = appendPatch patch[index], viewPatch
+
+  KDDomDiff.destroyView left, patch, index  if forceDestroy
+
+  return patch[index]
 
 
 addTextNodePatch = (left, right, patch, index) ->
