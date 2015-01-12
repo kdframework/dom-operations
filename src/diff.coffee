@@ -440,15 +440,16 @@ appendPatch = (patchArray, patch) ->
 
 addViewNodePatch = (left, right, patch, index, forceDestroy = yes) ->
 
-  KDDomDiff.destroyView left, patch, index  if forceDestroy
-
   viewPatch = new KDDomPatch
     type  : KDDomPatch.VIEW_NODE
     node  : left
     patch : right
 
-  patchArray = patch[index]
-  patchArray = appendPatch patchArray, viewPatch
+  patch[index] = appendPatch patch[index], viewPatch
+
+  KDDomDiff.destroyView left, patch, index  if forceDestroy
+
+  return patch[index]
 
 
 addTextNodePatch = (left, right, patch, index) ->
