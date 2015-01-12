@@ -1,6 +1,6 @@
 {
   "name": "kdf-dom-operations",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A diff-patch algorithm that works with KDDom tree.",
   "main": "lib/index.js",
   "repository": {
