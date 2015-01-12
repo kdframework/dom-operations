@@ -4,8 +4,10 @@
 domIndex = require 'vdom/dom-index'
 patchOp  = require 'vdom/patch-op'
 
-createElement = require './create-element'
+eventDelegator = require('kdf-dom-event-delegator').getInstance()
+
 KDDomPatch    = require './patch'
+createElement = require './create-element'
 
 module.exports = class KDDomPatcher
 
@@ -109,13 +111,31 @@ module.exports = class KDDomPatcher
     { type, node, patch } = domPatch
 
     return switch type
-      when KDDomPatch.DESTROY    then patchOp domPatch, domNode, renderOptions
+      when KDDomPatch.DESTROY    then destroyNode domPatch, domNode, renderOptions
       when KDDomPatch.ORDER      then patchOp domPatch, domNode, renderOptions
       when KDDomPatch.INSERT     then insertNode domNode, patch, renderOptions
       when KDDomPatch.TEXT_NODE  then textNodePatch domNode, node, patch, renderOptions
       when KDDomPatch.VIEW_NODE  then viewNodePatch domNode, node, patch, renderOptions
       when KDDomPatch.ATTRIBUTES then attributesPatch domPatch, domNode, renderOptions
       else throw new Error 'Patch type is unknown'
+
+
+###*
+ * Destroys given dom node, before that it unregisters
+ * itself from dom event delegator.
+ *
+ * @param {KDDomPatch} domPatch
+ * @param {DOMNode} domNode
+ * @param {Object} renderOptions
+ * @return {DOMNode}
+###
+destroyNode = (domPatch, domNode, renderOptions) ->
+
+  eventDelegator.unregisterNode domNode
+
+  vPatch = { vNode: domPatch.node, type: domPatch.type }
+
+  patchOp vPatch, domNode, renderOptions
 
 
 ###*

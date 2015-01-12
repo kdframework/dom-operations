@@ -39,6 +39,33 @@ describe 'KDDomPatcher', ->
       expect(newNode.childNodes[0].childNodes[0].textContent).toBe 'bar'
 
 
+    it 'unregisters kd node from dom event delegator', ->
+
+      clickEvent = fakeEvent 'click', { bubbles: yes }
+      current    = new EventedView { id: 1 }
+      next       = null
+      count      = 0
+
+      current.on 'click', -> count++
+
+      document.body.appendChild domElement = createElement current
+      domElement.dispatchEvent clickEvent
+
+      expect(count).toBe 1
+
+      patch = KDDomDiff.generatePatch current, next
+
+      newNode = KDDomPatcher.patch domElement, patch
+
+      expect(newNode).toBeNull()
+
+      domElement.dispatchEvent clickEvent
+
+      # It deleted from dom, so kdNode won't receive the message.
+      # so count will still be `1`
+      expect(count).toBe 1
+
+
   describe '.applySinglePatch', ->
 
     it "throws if the patch's type is unknown", ->
