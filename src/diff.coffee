@@ -99,7 +99,6 @@ module.exports = class KDDomDiff
         forceDestroy = no
         patchArray = addTextNodePatch left, right, patch, index, forceDestroy
 
-
     patch[index] = patchArray  if patchArray
 
     return patch
@@ -181,7 +180,7 @@ module.exports = class KDDomDiff
         # go start traversing the subview.
         KDDomDiff.traverse left, right, patch, index
 
-      index += left.subviews.length  if left?.subviews?.length
+      index += left.count  if left?.count?
 
     if nextSubviews.moves
       orderPatch = new KDDomPatch
@@ -315,6 +314,7 @@ module.exports = class KDDomDiff
       node  : view
       patch : null
 
+    patchArray = patch[index]
     patchArray = appendPatch patchArray, destroyPatch
     patch[index] = patchArray
 
