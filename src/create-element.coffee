@@ -1,6 +1,9 @@
 { isObject } = require 'lodash'
 { isViewNode, isTextNode, getAttributes } = require 'kdf-dom/lib/helpers'
 
+KDDomEventDelegator = require 'kdf-dom-event-delegator'
+defaultEvents = require 'kdf-dom-event-delegator/lib/default-events'
+
 ###*
  * It takes a view node instance and converts it into real dom node.
  *
@@ -25,6 +28,10 @@ module.exports = createElement = (node, options = {}) ->
 
   node.domElement = element
 
+  if events = node._e
+
+    applyEvents element, node
+
   { subviews } = node
 
   # create each subview's `DOMNode` and
@@ -35,6 +42,27 @@ module.exports = createElement = (node, options = {}) ->
     element.appendChild child  if child
 
   return element
+
+
+applyEvents = (element, view) ->
+
+  events = view._e
+  bindedEvents = view.getOption('bind')?.split(' ') or []
+  delegatedEvents = defaultEvents.slice()
+
+  for e in bindedEvents
+    continue  if e.trim()  is ''
+    delegatedEvents.push e  unless e in bindedEvents
+
+  shouldRegister = no
+  for event of events
+
+    if event in delegatedEvents
+      shouldRegister = yes
+      break
+
+  delegator = KDDomEventDelegator.getInstance()
+  delegator.registerNode element, view
 
 
 ###*
